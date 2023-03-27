@@ -61,9 +61,12 @@ echo '<PRE>';
 print_r(CApp::turn('profile'));
 echo '</PRE>';
 echo '<pre>';
-print_r(CApp::turn('crm.deal.list', [
-    'select' => ['TITLE',]
-]));
+print_r(CApp::turn(
+      'crm.deal.list', 
+      [
+            'select' => ['TITLE']
+      ]
+));
 echo '</pre>';
 ```
 
@@ -75,7 +78,7 @@ echo '<PRE>';
 print_r(CApp::turn(
     'profile', 
     [], //пустой массив, если не нужно указывать параметры
-    'https://test.ru/index/'  //адрес для callback
+    'https://example.com/index.php'  //адрес для callback
 ));
 echo '</PRE>';
 echo '<pre>';
@@ -84,10 +87,26 @@ print_r(CApp::turn(
     [
         'select' => ['TITLE',]
     ],
-    'https://test.ru/index/'  //адрес для callback
+    'https://example.com/index.php'  //адрес для callback
 ));
 echo '</pre>';
 ```
 
-## Рекомендации
+### Запрос результата
+```php
+// К адресу обратного вызова будет добавлен turn_id, по которому можно получить готовый результат
+echo '<PRE>';
+print_r(CApp::result($_REQUEST['turn_id']);
+echo '</PRE>';
+```
 
+
+
+## Общие рекомендации
+
+Чтобы не превысить лимиты со стороны портала Битрикс24 (2 запроса в секунду), а также проще регулировать свои северные ресурсы и сетевые соединения, используйте постановку запросов в очередь, т.е. <i>turn</i>:
+```php
+CApp::turn( $method, $params, $callback );
+```
+
+Как можно заметить, синтаксис формирования запросов к Битрикс24 совпадает примерами из [официальной документации](https://dev.1c-bitrix.ru/rest_help/), с тем отличием, что при необходимости можно указать callback 3-им параметром.
