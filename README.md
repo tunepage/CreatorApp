@@ -60,14 +60,15 @@ echo '</PRE>';
 echo '<PRE>';
 print_r(CApp::turn('profile'));
 echo '</PRE>';
-echo '<pre>';
+
+echo '<PRE>';
 print_r(CApp::turn(
       'crm.deal.list', 
       [
             'select' => ['TITLE']
       ]
 ));
-echo '</pre>';
+echo '</PRE>';
 ```
 
 
@@ -81,7 +82,8 @@ print_r(CApp::turn(
     'https://example.com/index.php'  //адрес для callback
 ));
 echo '</PRE>';
-echo '<pre>';
+
+echo '<PRE>';
 print_r(CApp::turn(
     'crm.deal.list', 
     [
@@ -89,7 +91,7 @@ print_r(CApp::turn(
     ],
     'https://example.com/index.php'  //адрес для callback
 ));
-echo '</pre>';
+echo '</PRE>';
 ```
 
 ### Запрос результата
