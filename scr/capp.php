@@ -1,7 +1,7 @@
 <?php
 
 /**
- *  @version 2.00
+ *  @version 2.01
  */
 
 class CApp
@@ -155,6 +155,49 @@ class CApp
 				'error' => 'Method not found'
 			];
 		}
+	}
+
+	/**
+	 * Generate a request for callCurl()
+	 *
+	 * @var $arData array
+	 * @var $halt int
+	 * @var $callback string
+	 * @return mixed array|string|boolean curl-return or error
+	 */
+	public static function turnBatch($arData, $halt = 0, $callback = '')
+	{
+		$arResult = [];
+		if(is_array($arData))
+		{
+			$arDataRest = [];
+			$i = 0;
+			foreach($arData as $key => $data)
+			{
+				if(!empty($data[ 'method' ]))
+				{
+					$i++;
+					if(50 >= $i)
+					{
+						$arDataRest[ 'cmd' ][ $key ] = $data[ 'method' ];
+						if(!empty($data[ 'params' ]))
+						{
+							$arDataRest[ 'cmd' ][ $key ] .= '?' . http_build_query($data[ 'params' ]);
+						}
+					}
+				}
+			}
+			if(!empty($arDataRest))
+			{
+				$arDataRest[ 'halt' ] = $halt;
+				$arPost = [
+					'method' => 'batch',
+					'params' => $arDataRest
+				];
+				$arResult = static::callCurl($arPost, 'turn', $callback);
+			}
+		}
+		return $arResult;
 	}
 
 	/**
