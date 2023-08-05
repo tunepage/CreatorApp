@@ -385,7 +385,7 @@ class CAppCurrent extends CApp
 	}
 
 	/**
-	 * Check for existence of appKey and memberId
+	 * Check for existence of timestamp, authId and $refreshId
 	 * @return boolean
 	 */
 	public static function testCurrent()
