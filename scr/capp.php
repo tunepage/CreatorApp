@@ -1,7 +1,7 @@
 <?php
 
 /**
- *  @version 1.00
+ *  @version 2.00
  */
 
 class CApp
@@ -16,10 +16,12 @@ class CApp
 	 *      'method'    => 'some rest method',
 	 *      'params'    => []//array params of method
 	 * ];
+	 * @var $methodApi string
+	 * @var $cb string
 	 * @return mixed array|string|boolean curl-return or error
 	 *
 	 */
-	protected static function callCurl($arParams, $method, $cb = '')
+	protected static function callCurl($arParams, $methodApi, $cb = '')
 	{
 		if (!static::test()) {
 			return [
@@ -27,10 +29,10 @@ class CApp
 			];
 		}
 		
-		$url = static::$rest.$method.'/';
+		$url = static::$rest.$methodApi.'/';
 		$arParams['key'] = static::$key;
 		$arParams['mid'] = static::$mid;
-		if ($method == 'turn') {
+		if ($methodApi == 'turn' || $methodApi == 'turn_current') {
 			$arParams['cb'] = $cb;
 		}
 		$sPostFields = http_build_query($arParams);
@@ -71,7 +73,6 @@ class CApp
 	 * @var $params array method params
 	 * @return mixed array|string|boolean curl-return or error
 	 */
-
 	public static function call($method, $params = [])
 	{
 		$arPost = [
@@ -89,6 +90,56 @@ class CApp
 		}
 	}
 
+	/**
+	 * Generate a request for callCurl()
+	 *
+	 * @var $arData array
+	 * @var $halt int
+	 * @return mixed array|string|boolean curl-return or error
+	 */
+	public static function callBatch($arData, $halt = 0)
+	{
+		$arResult = [];
+		if(is_array($arData))
+		{
+			$arDataRest = [];
+			$i = 0;
+			foreach($arData as $key => $data)
+			{
+				if(!empty($data[ 'method' ]))
+				{
+					$i++;
+					if(50 >= $i)
+					{
+						$arDataRest[ 'cmd' ][ $key ] = $data[ 'method' ];
+						if(!empty($data[ 'params' ]))
+						{
+							$arDataRest[ 'cmd' ][ $key ] .= '?' . http_build_query($data[ 'params' ]);
+						}
+					}
+				}
+			}
+			if(!empty($arDataRest))
+			{
+				$arDataRest[ 'halt' ] = $halt;
+				$arPost = [
+					'method' => 'batch',
+					'params' => $arDataRest
+				];
+				$arResult = static::callCurl($arPost, 'call');
+			}
+		}
+		return $arResult;
+	}
+
+	/**
+	 * Generate a request for callCurl()
+	 *
+	 * @var $method string
+	 * @var $params array method params
+	 * @var $callback string
+	 * @return mixed array|string|boolean curl-return or error
+	 */
 	public static function turn($method, $params = [], $callback = '')
 	{
 		$arPost = [
@@ -106,14 +157,27 @@ class CApp
 		}
 	}
 
-	public static function result($id)
+	/**
+	 * Generate a request for callCurl()
+	 *
+	 * @var $id int
+	 * @var $params int 0|1
+	 * @var $userId int
+	 * @return mixed array|string|boolean curl-return or error
+	 */
+	public static function result($id, $params = 0, $userId = '')
 	{
 		$arPost = [
 			'id' => $id,
+			'params' => $params,
 		];
 
+		if (!empty($userId)) {
+			$userId = '_'.$userId;
+		}
+
 		if (!empty($id)) {
-			$result = static::callCurl($arPost, 'result');
+			$result = static::callCurl($arPost, 'result'.$userId);
 			return $result;
 		} else {
 			return [
@@ -138,6 +202,7 @@ class CApp
 		// }
 		return true;
 	}
+
 	/**
 	 * Check for existence of appKey and memberId
 	 * @return boolean
@@ -145,6 +210,162 @@ class CApp
 	public static function test()
 	{
 		if (empty(static::$key) || empty(static::$mid)) {
+			return false;
+		}
+		return true;
+	}
+
+	/**
+	 * Convert to json
+	 * @return string
+	 */
+	public static function ConvertToJson($data)
+	{
+		$return = json_encode($data, JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_FORCE_OBJECT);
+		return $return;
+	}
+}
+
+class CAppCurrent extends CApp
+{
+	protected static $ex = 0;
+	protected static $aid = '';
+	protected static $rid = '';
+	protected static $uid = 0;
+
+	/**
+	 * Generate a request for callCurl()
+	 *
+	 * @var $method string
+	 * @var $params array method params
+	 * @return mixed array|string|boolean curl-return or error
+	 */
+	public static function call($method, $params = [])
+	{
+		if (static::testCurrentUserId()) {
+			$arPost = [
+				'method' => $method,
+				'params' => $params,
+				'uid' => static::$uid,
+			];
+		}
+		elseif (static::testCurrent()) {
+			$arPost = [
+				'method' => $method,
+				'params' => $params,
+				'ex' => static::$ex,
+				'aid' => static::$aid,
+				'rid' => static::$rid,
+			];
+		} else {
+			return [
+				'error' => 'Need CAppCurrent::newClient(timeOpenApp, authId, refreshId) or CAppCurrent::newClientByUserID(id)'
+			];
+		}
+
+		if (!empty($method)) {
+			$result = static::callCurl($arPost, 'call_current');
+			return $result;
+		} else {
+			return [
+				'error' => 'Method not found'
+			];
+		}
+	}
+
+	/**
+	 * Generate a request for callCurl()
+	 *
+	 * @var $method string
+	 * @var $params array method params
+	 * @var $callback string
+	 * @return mixed array|string|boolean curl-return or error
+	 */
+	public static function turn($method, $params = [], $callback = '')
+	{
+		if (static::testCurrentUserId()) {
+			$arPost = [
+				'method' => $method,
+				'params' => $params,
+				'uid' => static::$uid,
+			];
+		}
+		elseif (static::testCurrent()) {
+			$arPost = [
+				'method' => $method,
+				'params' => $params,
+				'ex' => static::$ex,
+				'aid' => static::$aid,
+				'rid' => static::$rid,
+			];
+		} else {
+			return [
+				'error' => 'Need CAppCurrent::newClient(timeOpenApp, authId, refreshId) or CAppCurrent::newClientByUserID(id)'
+			];
+		}
+
+		if (!empty($method)) {
+			$result = static::callCurl($arPost, 'turn_current', $callback);
+			return $result;
+		} else {
+			return [
+				'error' => 'Method not found'
+			];
+		}
+	}
+	
+	/**
+	 * Set a key client
+	 *
+	 * @var $timestamp int
+	 * @var $authId string
+	 * @var $refreshId string
+	 * @return mixed boolean or null
+	 */
+	public static function newClient($timestamp, $authId, $refreshId)
+	{
+		static::$ex = $timestamp+3600;
+		static::$aid = $authId;
+		static::$rid = $refreshId;
+		// if (empty(static::$key) || empty(static::$mid)) {
+		// 	return null;
+		// }
+		return true;
+	}
+
+	/**
+	 * Set a key client
+	 *
+	 * @var $userId int
+	 * @return mixed boolean or null
+	 */
+	public static function newClientByUserID($userId)
+	{
+		static::$uid = $userId;
+		// if (empty(static::$key) || empty(static::$mid)) {
+		// 	return null;
+		// }
+		return true;
+	}
+
+	/**
+	 * Check for existence of appKey and memberId
+	 * @return boolean
+	 */
+	public static function testCurrent()
+	{
+		if (static::$ex == 0 || empty(static::$aid) || empty(static::$rid)) {
+			return false;
+		}
+		return true;
+	}
+	/**
+	 * Check for existence of userId
+	 * @return boolean
+	 */
+	public static function testCurrentUserId()
+	{
+		if (!static::$uid > 0) {
 			return false;
 		}
 		return true;
