@@ -6,6 +6,7 @@
 
 class CApp
 {
+	const VERSION = '2.01';
 	protected static $key = '';
 	protected static $mid = '';
 	protected static $rest = 'https://bxrest.highload24.ru/rest/';
@@ -43,7 +44,7 @@ class CApp
 			curl_setopt($obCurl, CURLOPT_URL, $url);
 			curl_setopt($obCurl, CURLOPT_RETURNTRANSFER, true);
 			curl_setopt($obCurl, CURLOPT_POSTREDIR, 10);
-			curl_setopt($obCurl, CURLOPT_USERAGENT, 'Bitrix24 Creator App Client PHP 1.00');
+			curl_setopt($obCurl, CURLOPT_USERAGENT, 'Bitrix24 Creator App Client PHP ' . static::VERSION);
 			if($sPostFields)
 			{
 				curl_setopt($obCurl, CURLOPT_POST, true);
