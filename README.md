@@ -1,6 +1,6 @@
 # CreatorApp
 
-CreatorApp — небольшой PHPSDK для использования совместно с <a href="https://www.bitrix24.ru/apps/app/tunepage.app_creator/" target="_blank">«Конструктором приложений»</a> для Битрикс24.
+CreatorApp — небольшой PHPSDK для взаимодействия с Битрикс24 через надежный сервис (используется совместно с <a href="https://www.bitrix24.ru/apps/app/tunepage.app_creator/" target="_blank">«Конструктором приложений»</a>).
 
 
 ## Описание
