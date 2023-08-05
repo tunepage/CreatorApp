@@ -290,17 +290,9 @@ class CAppCurrent extends CApp
 				'uid' => static::$uid,
 			];
 		}
-		elseif (static::testCurrent()) {
-			$arPost = [
-				'method' => $method,
-				'params' => $params,
-				'ex' => static::$ex,
-				'aid' => static::$aid,
-				'rid' => static::$rid,
-			];
-		} else {
+		else {
 			return [
-				'error' => 'Need CAppCurrent::newClient(timeOpenApp, authId, refreshId) or CAppCurrent::newClientByUserID(id)'
+				'error' => 'Need CAppCurrent::newClientByUserID(id)'
 			];
 		}
 
