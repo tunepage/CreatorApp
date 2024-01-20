@@ -174,7 +174,7 @@ $arData['get_lead'] = [
 
 // отправляем запрос
 echo '<PRE>';
-print_r(CAppCurrent::tunr(
+print_r(CAppCurrent::turn(
 	$arData,
 	0,	//Флаг "прерывать исполнение пакета в при возникновении ошибки". По умолчанию - 0
 	'https://example.com/index.php'  //адрес для callback
