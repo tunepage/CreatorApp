@@ -1,15 +1,15 @@
 <?php
 
 /**
- *  @version 2.01
+ *  @version 3.00
  */
 
 class CApp
 {
-	const VERSION = '2.01';
+	const VERSION = '3.00';
 	protected static $key = '';
 	protected static $mid = '';
-	protected static $rest = 'https://bxrest.highload24.ru/rest/';
+	protected static $rest = 'https://bxrest.highload24.ru:10443/rest/';
 
 	/**
 	 * @var $arParams array
@@ -36,8 +36,9 @@ class CApp
 		if ($methodApi == 'turn' || $methodApi == 'turn_current') {
 			$arParams['cb'] = $cb;
 		}
-		$sPostFields = http_build_query($arParams);
-	
+		$json = json_encode($arParams, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
+		
 		try
 		{
 			$obCurl = curl_init();
@@ -45,11 +46,11 @@ class CApp
 			curl_setopt($obCurl, CURLOPT_RETURNTRANSFER, true);
 			curl_setopt($obCurl, CURLOPT_POSTREDIR, 10);
 			curl_setopt($obCurl, CURLOPT_USERAGENT, 'Bitrix24 Creator App Client PHP ' . static::VERSION);
-			if($sPostFields)
-			{
-				curl_setopt($obCurl, CURLOPT_POST, true);
-				curl_setopt($obCurl, CURLOPT_POSTFIELDS, $sPostFields);
-			}
+			curl_setopt($obCurl, CURLOPT_HTTPHEADER, [
+				'Content-Type: application/json'
+			]);
+			curl_setopt($obCurl, CURLOPT_POST, true);
+			curl_setopt($obCurl, CURLOPT_POSTFIELDS, $json);
 			curl_setopt($obCurl, CURLOPT_FOLLOWLOCATION, 1);
 			$out = curl_exec($obCurl);
 			$info = curl_getinfo($obCurl);
@@ -212,7 +213,7 @@ class CApp
 	public static function result($id, $params = 0, $userId = '')
 	{
 		$arPost = [
-			'id' => $id,
+			'id' => (int)$id,
 			'params' => $params,
 		];
 
@@ -241,9 +242,6 @@ class CApp
 	{
 		static::$key = $appKey;
 		static::$mid = $memberId;
-		// if (empty(static::$key) || empty(static::$mid)) {
-		// 	return null;
-		// }
 		return true;
 	}
 
@@ -333,8 +331,7 @@ class CAppCurrent extends CApp
 				'params' => $params,
 				'uid' => static::$uid,
 			];
-		}
-		else {
+		} else {
 			return [
 				'error' => 'Need CAppCurrent::newClientByUserID(id)'
 			];
@@ -363,9 +360,6 @@ class CAppCurrent extends CApp
 		static::$ex = $timestamp+3600;
 		static::$aid = $authId;
 		static::$rid = $refreshId;
-		// if (empty(static::$key) || empty(static::$mid)) {
-		// 	return null;
-		// }
 		return true;
 	}
 
@@ -377,15 +371,12 @@ class CAppCurrent extends CApp
 	 */
 	public static function newClientByUserID($userId)
 	{
-		static::$uid = $userId;
-		// if (empty(static::$key) || empty(static::$mid)) {
-		// 	return null;
-		// }
+		static::$uid = (int)$userId;
 		return true;
 	}
 
 	/**
-	 * Check for existence of timestamp, authId and $refreshId
+	 * Check for existence of appKey and memberId
 	 * @return boolean
 	 */
 	public static function testCurrent()
